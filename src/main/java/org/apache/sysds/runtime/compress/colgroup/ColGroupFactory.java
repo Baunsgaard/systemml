@@ -208,6 +208,9 @@ public final class ColGroupFactory {
 		CompressedSizeInfoColGroup cg, int[] colIndexes) {
 		try {
 			final int nrUniqueEstimate = cg.getNumVals();
+			if(nrUniqueEstimate > 1000){
+				LOG.error("Large Estimate of elements" + nrUniqueEstimate);
+			}
 			final CompressionType estimatedBestCompressionType = cg.getBestCompressionType();
 			if(estimatedBestCompressionType == CompressionType.UNCOMPRESSED) {
 				// shortcut if uncompressed
