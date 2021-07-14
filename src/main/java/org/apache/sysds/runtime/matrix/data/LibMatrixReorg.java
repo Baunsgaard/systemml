@@ -193,21 +193,13 @@ public class LibMatrixReorg {
 	public static MatrixBlock transpose( MatrixBlock in, MatrixBlock out, int k, boolean allowCSR){
 		//redirect small or special cases to sequential execution
 		if( in.isEmptyBlock(false) 
-			|| (in.rlen * in.clen < PAR_NUMCELL_THRESHOLD)
+			|| ((long)in.rlen * (long)in.clen < PAR_NUMCELL_THRESHOLD)
 			|| k == 1
 			|| (SHALLOW_COPY_REORG && !in.sparse && !out.sparse && (in.rlen==1 || in.clen==1) )
 			|| (in.sparse && !out.sparse && in.rlen==1)
 			|| (!in.sparse && out.sparse && in.rlen==1) 
 			|| (!in.sparse && out.sparse))
 		{
-			LOG.error("Choosing Single threaded transpose");
-			LOG.error( in.isEmptyBlock(false) );
-			LOG.error((in.rlen * in.clen < PAR_NUMCELL_THRESHOLD));
-			LOG.error(k == 1);
-			LOG.error((SHALLOW_COPY_REORG && !in.sparse && !out.sparse && (in.rlen==1 || in.clen==1) ));
-			LOG.error((in.sparse && !out.sparse && in.rlen==1));
-			LOG.error((!in.sparse && out.sparse && in.rlen==1));
-			LOG.error((!in.sparse && out.sparse));
 			return transpose(in, out);
 		}
 		//set meta data and allocate output arrays (if required)
