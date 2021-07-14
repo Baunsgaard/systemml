@@ -201,15 +201,17 @@ public class LibMatrixReorg {
 			|| (!in.sparse && out.sparse))
 		{
 			LOG.error("Choosing Single threaded transpose");
+			LOG.error(in.rlen);
+			LOG.error(in.clen);
 			return transpose(in, out);
 		}
-		allowCSR = allowCSR && in.getNonZeros() < (long)Integer.MAX_VALUE;
-		// Timing time = new Timing(true);
-		
 		//set meta data and allocate output arrays (if required)
 		out.nonZeros = in.nonZeros;
+		allowCSR = allowCSR && out.nonZeros < (long)Integer.MAX_VALUE;
+		// Timing time = new Timing(true);
+		
 		if(out.sparse && allowCSR){
-			int size = (int)in.getNonZeros();
+			int size = (int)out.nonZeros;
 			out.sparseBlock = new SparseBlockCSR(in.getNumColumns(), size, size);
 		}
 		else if( out.sparse)
