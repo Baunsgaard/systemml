@@ -19,6 +19,11 @@
 
 package org.apache.sysds.runtime.instructions.cp;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+
+import com.github.luben.zstd.Zstd;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -68,6 +73,21 @@ public class CompressionCPInstruction extends ComputationCPInstruction {
 		WTreeRoot root = (_singletonLookupID != 0) ? (WTreeRoot) m.get(_singletonLookupID) : null;
 		// Compress the matrix block
 		Pair<MatrixBlock, CompressionStatistics> compResult = CompressedMatrixBlockFactory.compress(in, OptimizerUtils.getConstrainedNumThreads(-1), root);
+		try{
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			DataOutputStream fos = new DataOutputStream(bos);
+			in.write(fos);
+			byte[] data = bos.toByteArray();
+			// Serialize in
+			// ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+			byte[] compressed = Zstd.compress(data);
+			LOG.error("Uncompressed: " + data.length);
+			LOG.error("Compressed Zstd: " + compressed.length);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+
 
 		if(LOG.isDebugEnabled())
 			LOG.debug(compResult.getRight());

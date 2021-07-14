@@ -19,7 +19,6 @@
 
 package org.apache.sysds.runtime.compress.estim;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -243,7 +242,7 @@ public class CompressedSizeInfoColGroup {
 		}
 	}
 
-	public void clearMap(){
+	public void clearMap() {
 		_map = null;
 	}
 
