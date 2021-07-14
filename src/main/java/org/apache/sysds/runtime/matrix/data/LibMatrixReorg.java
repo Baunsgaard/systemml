@@ -35,6 +35,8 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.sysds.runtime.DMLRuntimeException;
 import org.apache.sysds.runtime.controlprogram.caching.MatrixObject.UpdateType;
 import org.apache.sysds.runtime.data.DenseBlock;
@@ -69,7 +71,7 @@ import org.apache.sysds.runtime.util.UtilFunctions;
  */
 public class LibMatrixReorg {
 
-	// private static final Log LOG = LogFactory.getLog(LibMatrixReorg.class.getName());
+	private static final Log LOG = LogFactory.getLog(LibMatrixReorg.class.getName());
 
 	//minimum number of elements for multi-threaded execution
 	public static long PAR_NUMCELL_THRESHOLD = 1024*1024; //1M
@@ -190,11 +192,15 @@ public class LibMatrixReorg {
 	
 	public static MatrixBlock transpose( MatrixBlock in, MatrixBlock out, int k, boolean allowCSR){
 		//redirect small or special cases to sequential execution
-		if( in.isEmptyBlock(false) || (in.rlen * in.clen < PAR_NUMCELL_THRESHOLD) || k == 1
+		if( in.isEmptyBlock(false) 
+			|| (in.rlen * in.clen < PAR_NUMCELL_THRESHOLD)
+			|| k == 1
 			|| (SHALLOW_COPY_REORG && !in.sparse && !out.sparse && (in.rlen==1 || in.clen==1) )
-			|| (in.sparse && !out.sparse && in.rlen==1) || (!in.sparse && out.sparse && in.rlen==1) 
-			|| (!in.sparse && out.sparse) || !out.isThreadSafe())
+			|| (in.sparse && !out.sparse && in.rlen==1)
+			|| (!in.sparse && out.sparse && in.rlen==1) 
+			|| (!in.sparse && out.sparse))
 		{
+			LOG.error("Choosing Single threaded transpose");
 			return transpose(in, out);
 		}
 		allowCSR = allowCSR && in.getNonZeros() < (long)Integer.MAX_VALUE;
