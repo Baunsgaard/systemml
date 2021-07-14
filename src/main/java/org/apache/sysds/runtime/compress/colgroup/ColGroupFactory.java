@@ -468,36 +468,37 @@ public final class ColGroupFactory {
 	}
 
 	public static AColGroup compressSDCZero(SparseBlock sb, int[] cols, int nRows, DoubleCountHashMap map) {
+
 		final int sbRow = cols[0];
-		final int apos = sb.pos(sbRow);
-		final int alen = sb.size(sbRow) + apos;
-		final AOffset offsets = OffsetFactory.create(sb.indexes(sbRow), nRows, apos, alen);
-		final double[] vals = sb.values(sbRow);
-		// count distinct items frequencies
+		return new ColGroupEmpty(cols, nRows);
+		// final int apos = sb.pos(sbRow);
+		// final int alen = sb.size(sbRow) + apos;
+		// final AOffset offsets = OffsetFactory.create(sb.indexes(sbRow), nRows, apos, alen);
+		// final double[] vals = sb.values(sbRow);
+		// // count distinct items frequencies
 		// for(int j = apos; j < alen; j++)
 		// 	map.increment(vals[j]);
-		map.increment(vals[apos]);
-		List<DCounts> entries = map.extractValues();
-		Collections.sort(entries, Comparator.comparing(x -> -x.count));
-		int[] counts = new int[entries.size() + 1];
-		int sum = 0;
-		double[] dict = new double[entries.size()];
-		for(int i = 0; i < entries.size(); i++) {
-			DCounts x = entries.get(i);
-			counts[i] = x.count;
-			sum += x.count;
-			dict[i] = x.key;
-			x.count = i;
-		}
+		
+		// List<DCounts> entries = map.extractValues();
+		// Collections.sort(entries, Comparator.comparing(x -> -x.count));
+		// int[] counts = new int[entries.size() + 1];
+		// int sum = 0;
+		// double[] dict = new double[entries.size()];
+		// for(int i = 0; i < entries.size(); i++) {
+		// 	DCounts x = entries.get(i);
+		// 	counts[i] = x.count;
+		// 	sum += x.count;
+		// 	dict[i] = x.key;
+		// 	x.count = i;
+		// }
 
-		counts[entries.size()] = nRows - sum;
+		// counts[entries.size()] = nRows - sum;
 
-		AMapToData mapToData = MapToFactory.create((alen - apos), entries.size());
+		// AMapToData mapToData = MapToFactory.create((alen - apos), entries.size());
 		// for(int j = apos; j < alen; j++)
-		for(int j = apos; j < apos +1; j++)
-			mapToData.set(j - apos, map.get(vals[j]));
+		// 	mapToData.set(j - apos, map.get(vals[j]));
 
-		return new ColGroupSDCZeros(cols, nRows, new Dictionary(dict), offsets, mapToData, counts);
+		// return new ColGroupSDCZeros(cols, nRows, new Dictionary(dict), offsets, mapToData, counts);
 	}
 
 	protected static class Tmp {
