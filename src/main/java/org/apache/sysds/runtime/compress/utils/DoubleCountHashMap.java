@@ -197,7 +197,11 @@ public class DoubleCountHashMap {
 	}
 
 	public void reset(int size){
-		Arrays.fill(_data, null);
+		int p2 = getPow2(size);
+		if(_data.length > 2 * p2)
+			_data = new Bucket[p2];
+		else
+			Arrays.fill(_data, null);
 		_size = 0;
 	}
 }
