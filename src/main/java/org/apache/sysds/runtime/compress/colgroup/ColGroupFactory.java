@@ -474,8 +474,9 @@ public final class ColGroupFactory {
 		final AOffset offsets = OffsetFactory.create(sb.indexes(sbRow), nRows, apos, alen);
 		final double[] vals = sb.values(sbRow);
 		// count distinct items frequencies
-		for(int j = apos; j < alen; j++)
-			map.increment(vals[j]);
+		// for(int j = apos; j < alen; j++)
+		// 	map.increment(vals[j]);
+		map.increment(vals[apos]);
 		List<DCounts> entries = map.extractValues();
 		Collections.sort(entries, Comparator.comparing(x -> -x.count));
 		int[] counts = new int[entries.size() + 1];
@@ -492,7 +493,8 @@ public final class ColGroupFactory {
 		counts[entries.size()] = nRows - sum;
 
 		AMapToData mapToData = MapToFactory.create((alen - apos), entries.size());
-		for(int j = apos; j < alen; j++)
+		// for(int j = apos; j < alen; j++)
+		for(int j = apos; j < apos +1; j++)
 			mapToData.set(j - apos, map.get(vals[j]));
 
 		return new ColGroupSDCZeros(cols, nRows, new Dictionary(dict), offsets, mapToData, counts);
