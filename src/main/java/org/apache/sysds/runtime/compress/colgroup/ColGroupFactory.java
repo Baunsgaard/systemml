@@ -78,6 +78,10 @@ public final class ColGroupFactory {
 	 */
 	public static List<AColGroup> compressColGroups(MatrixBlock in, CompressedSizeInfo csi,
 		CompressionSettings compSettings, int k) {
+		for(CompressedSizeInfoColGroup g :  csi.getInfo())
+			g.clearMap();
+		
+
 		if(k <= 1)
 			return compressColGroupsSingleThreaded(in, csi, compSettings);
 		else
@@ -90,8 +94,9 @@ public final class ColGroupFactory {
 		List<CompressedSizeInfoColGroup> groups = csi.getInfo();
 
 		Tmp tmpMap = new Tmp();
-		for(CompressedSizeInfoColGroup g : groups)
+		for(CompressedSizeInfoColGroup g : groups){
 			ret.addAll(compressColGroup(in, compSettings, tmpMap, g));
+		}
 
 		return ret;
 	}
