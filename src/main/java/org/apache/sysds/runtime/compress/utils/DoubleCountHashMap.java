@@ -30,6 +30,7 @@ public class DoubleCountHashMap {
 	protected static final Log LOG = LogFactory.getLog(DoubleCountHashMap.class.getName());
 	protected static final int RESIZE_FACTOR = 2;
 	protected static final float LOAD_FACTOR = 0.80f;
+	public static int hashMissCount = 0;
 
 	protected int _size = -1;
 	private Bucket[] _data = null;
@@ -84,8 +85,10 @@ public class DoubleCountHashMap {
 		int hash = hash(key);
 		int ix = indexFor(hash, _data.length);
 		Bucket l = _data[ix];
-		while(l != null && !(l.v.key == key))
+		while(l != null && !(l.v.key == key)){
+			hashMissCount++;
 			l = l.n;
+		}
 
 		if(l == null) {
 			Bucket ob = _data[ix];

@@ -25,8 +25,6 @@ import java.util.Comparator;
 /**
  * This class provides a memory-efficient replacement for {@code HashMap<Double,IntArrayList>} for restricted use cases.
  * 
- * TODO: Fix allocation of size such that it contains some amount of overhead from the start, to enable hashmap
- * performance.
  */
 public class DoubleIntListHashMap {
 	protected static final int INIT_CAPACITY = 8;
@@ -34,6 +32,7 @@ public class DoubleIntListHashMap {
 	protected static final float LOAD_FACTOR = 0.50f;
 	protected int _size = -1;
 	private DIListEntry[] _data = null;
+	public static int hashMissCount = 0;
 
 	public DoubleIntListHashMap() {
 		_data = new DIListEntry[INIT_CAPACITY];
@@ -219,7 +218,7 @@ public class DoubleIntListHashMap {
 		StringBuilder sb = new StringBuilder();
 		sb.append(this.getClass().getSimpleName() + this.hashCode());
 		for(int i = 0; i < _data.length; i++)
-			if(_data[i] != null)	
+			if(_data[i] != null)
 				sb.append(", " + _data[i]);
 		return sb.toString();
 	}

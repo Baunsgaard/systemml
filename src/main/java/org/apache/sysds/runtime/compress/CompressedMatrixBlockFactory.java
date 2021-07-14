@@ -41,6 +41,7 @@ import org.apache.sysds.runtime.compress.estim.CompressedSizeEstimator;
 import org.apache.sysds.runtime.compress.estim.CompressedSizeEstimatorFactory;
 import org.apache.sysds.runtime.compress.estim.CompressedSizeInfo;
 import org.apache.sysds.runtime.compress.utils.DblArrayIntListHashMap;
+import org.apache.sysds.runtime.compress.utils.DoubleCountHashMap;
 import org.apache.sysds.runtime.compress.workload.WTreeRoot;
 import org.apache.sysds.runtime.controlprogram.parfor.stat.Timing;
 import org.apache.sysds.runtime.matrix.data.LibMatrixReorg;
@@ -390,8 +391,9 @@ public class CompressedMatrixBlockFactory {
 					break;
 				case 3:
 					LOG.debug("--compression phase " + phase + " Compress  : " + getLastTimePhase());
-					LOG.debug("--compression Hash collisions:" + DblArrayIntListHashMap.hashMissCount);
+					LOG.debug("--compression Hash collisions:" + "(" +DblArrayIntListHashMap.hashMissCount+","+DoubleCountHashMap.hashMissCount+")");
 					DblArrayIntListHashMap.hashMissCount = 0;
+					DoubleCountHashMap.hashMissCount = 0;
 					LOG.debug("--compressed initial actual size:" + _stats.compressedInitialSize);
 					break;
 				case 4:
