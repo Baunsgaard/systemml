@@ -194,7 +194,6 @@ public class CompressedMatrixBlockFactory {
 		if(coCodeColGroups == null)
 			return abortCompression();
 		transposePhase();
-		System.gc();
 		compressPhase();
 		sharePhase();
 		cleanupPhase();
