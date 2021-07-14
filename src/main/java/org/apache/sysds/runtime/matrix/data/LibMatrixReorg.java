@@ -201,8 +201,13 @@ public class LibMatrixReorg {
 			|| (!in.sparse && out.sparse))
 		{
 			LOG.error("Choosing Single threaded transpose");
-			LOG.error(in.rlen);
-			LOG.error(in.clen);
+			LOG.error( in.isEmptyBlock(false) );
+			LOG.error((in.rlen * in.clen < PAR_NUMCELL_THRESHOLD));
+			LOG.error(k == 1);
+			LOG.error((SHALLOW_COPY_REORG && !in.sparse && !out.sparse && (in.rlen==1 || in.clen==1) ));
+			LOG.error((in.sparse && !out.sparse && in.rlen==1));
+			LOG.error((!in.sparse && out.sparse && in.rlen==1));
+			LOG.error((!in.sparse && out.sparse));
 			return transpose(in, out);
 		}
 		//set meta data and allocate output arrays (if required)
