@@ -41,8 +41,8 @@ public class ReaderColumnSelectionSparseTransposed extends ReaderColumnSelection
 	private int[] sparsePos = null;
 
 	// Temporary dense block.
-	private double[] cache;
-	private boolean[] empty;
+	// private double[] cache;
+	// private boolean[] empty;
 
 	/**
 	 * Reader of sparse matrix blocks for compression.
@@ -76,8 +76,8 @@ public class ReaderColumnSelectionSparseTransposed extends ReaderColumnSelection
 		}
 		else {
 
-			cache = new double[CACHE_BLOCK_ROWS * colIndexes.length];
-			empty = new boolean[CACHE_BLOCK_ROWS];
+			// cache = new double[CACHE_BLOCK_ROWS * colIndexes.length];
+			// empty = new boolean[CACHE_BLOCK_ROWS];
 		}
 	}
 
@@ -87,81 +87,81 @@ public class ReaderColumnSelectionSparseTransposed extends ReaderColumnSelection
 		}
 		_lastRow++;
 
-		final int cacheIdx = _lastRow % CACHE_BLOCK_ROWS;
-		if(cacheIdx == 0)
-			fillCache(_lastRow, Math.min(_numRows, _lastRow + CACHE_BLOCK_ROWS));
+		// final int cacheIdx = _lastRow % CACHE_BLOCK_ROWS;
+		// if(cacheIdx == 0)
+		// 	fillCache(_lastRow, Math.min(_numRows, _lastRow + CACHE_BLOCK_ROWS));
 
-		if(empty[cacheIdx])
-			return emptyReturn;
-		else {
-			int rowOff = _colIndexes.length * cacheIdx;
-			for(int i = 0; i < _colIndexes.length; i++) 
-				reusableArr[i] = cache[rowOff + i];
-			
-			return reusableReturn;
-		}
-		// return tmpRows[0];
-		// boolean zeroResult = true;
-		// for(int i = 0; i < _colIndexes.length; i++) {
-		// int colidx = _colIndexes[i];
-		// if(sparsePos[i] != -1) {
-		// final int alen = a.size(colidx) + a.pos(colidx);
-		// int[] aix = a.indexes(colidx);
-		// double[] avals = a.values(colidx);
-		// while(sparsePos[i] < alen && aix[sparsePos[i]] < _lastRow) {
-		// sparsePos[i] += 1;
-		// }
-
-		// if(sparsePos[i] >= alen) {
-		// // Mark this column as done.
-		// sparsePos[i] = -1;
-		// reusableArr[i] = 0;
-		// }
-		// else if(aix[sparsePos[i]] == _lastRow) {
-		// reusableArr[i] = avals[sparsePos[i]];
-		// zeroResult = false;
-		// }
+		// if(empty[cacheIdx])
+		// 	return emptyReturn;
 		// else {
-		// reusableArr[i] = 0;
+		// 	int rowOff = _colIndexes.length * cacheIdx;
+		// 	for(int i = 0; i < _colIndexes.length; i++) 
+		// 		reusableArr[i] = cache[rowOff + i];
+			
+		// 	return reusableReturn;
 		// }
-		// }
-		// }
+		// return tmpRows[0];
+		boolean zeroResult = true;
+		for(int i = 0; i < _colIndexes.length; i++) {
+		int colidx = _colIndexes[i];
+		if(sparsePos[i] != -1) {
+		final int alen = a.size(colidx) + a.pos(colidx);
+		int[] aix = a.indexes(colidx);
+		double[] avals = a.values(colidx);
+		while(sparsePos[i] < alen && aix[sparsePos[i]] < _lastRow) {
+		sparsePos[i] += 1;
+		}
 
-		// return zeroResult ? emptyReturn : reusableReturn;
+		if(sparsePos[i] >= alen) {
+		// Mark this column as done.
+		sparsePos[i] = -1;
+		reusableArr[i] = 0;
+		}
+		else if(aix[sparsePos[i]] == _lastRow) {
+		reusableArr[i] = avals[sparsePos[i]];
+		zeroResult = false;
+		}
+		else {
+		reusableArr[i] = 0;
+		}
+		}
+		}
+
+		return zeroResult ? emptyReturn : reusableReturn;
 
 	}
 
-	protected void fillCache(int rl, int ru) {
-		// boolean zeroResult = true;
-		try {
+	// protected void fillCache(int rl, int ru) {
+	// 	// boolean zeroResult = true;
+	// 	try {
 
-			Arrays.fill(cache, 0);
-			Arrays.fill(empty, true);
-			final int nCol = _colIndexes.length;
-			for(int i = 0; i < nCol; i++) {
-				final int colidx = _colIndexes[i];
-				// final int rowOff = i * CACHE_BLOCK_ROWS;
-				int pos = sparsePos[i];
-				if(pos != -1) {
-					final int alen = a.size(colidx) + a.pos(colidx);
-					final int[] aix = a.indexes(colidx);
-					final double[] avals = a.values(colidx);
-					while(pos < alen && aix[pos] < ru) {
-						cache[(aix[pos] - rl) * nCol + i] = avals[pos];
-						empty[aix[pos] - rl] = false;
-						pos++;
-					}
-					if(pos >= alen) {
-						pos = -1;
-					}
-				}
-				sparsePos[i] = pos;
-			}
-		}
-		catch(Exception e) {
+	// 		Arrays.fill(cache, 0);
+	// 		Arrays.fill(empty, true);
+	// 		final int nCol = _colIndexes.length;
+	// 		for(int i = 0; i < nCol; i++) {
+	// 			final int colidx = _colIndexes[i];
+	// 			// final int rowOff = i * CACHE_BLOCK_ROWS;
+	// 			int pos = sparsePos[i];
+	// 			if(pos != -1) {
+	// 				final int alen = a.size(colidx) + a.pos(colidx);
+	// 				final int[] aix = a.indexes(colidx);
+	// 				final double[] avals = a.values(colidx);
+	// 				while(pos < alen && aix[pos] < ru) {
+	// 					cache[(aix[pos] - rl) * nCol + i] = avals[pos];
+	// 					empty[aix[pos] - rl] = false;
+	// 					pos++;
+	// 				}
+	// 				if(pos >= alen) {
+	// 					pos = -1;
+	// 				}
+	// 			}
+	// 			sparsePos[i] = pos;
+	// 		}
+	// 	}
+	// 	catch(Exception e) {
 
-			throw new DMLCompressionException(cache.length + "  " + Arrays.toString(cache), e);
-		}
+	// 		throw new DMLCompressionException(cache.length + "  " + Arrays.toString(cache), e);
+	// 	}
 
-	}
+	// }
 }

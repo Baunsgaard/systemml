@@ -102,7 +102,7 @@ public final class ColGroupFactory {
 			ExecutorService pool = CommonThreadPool.get(k);
 			List<CompressTask> tasks = new ArrayList<>();
 
-			List<List<CompressedSizeInfoColGroup>> threadGroups = makeGroups(csi.getInfo(), k /2);
+			List<List<CompressedSizeInfoColGroup>> threadGroups = makeGroups(csi.getInfo(), k / 2);
 			for(List<CompressedSizeInfoColGroup> tg : threadGroups)
 				if(!tg.isEmpty())
 					tasks.add(new CompressTask(in, tg, compSettings));
@@ -208,7 +208,7 @@ public final class ColGroupFactory {
 		CompressedSizeInfoColGroup cg, int[] colIndexes) {
 		try {
 			final int nrUniqueEstimate = cg.getNumVals();
-			if(nrUniqueEstimate > 1000){
+			if(nrUniqueEstimate > 1000) {
 				LOG.error("Large Estimate of elements" + nrUniqueEstimate);
 			}
 			final CompressionType estimatedBestCompressionType = cg.getBestCompressionType();
@@ -469,36 +469,36 @@ public final class ColGroupFactory {
 
 	public static AColGroup compressSDCZero(SparseBlock sb, int[] cols, int nRows, DoubleCountHashMap map) {
 
+		// return new ColGroupEmpty(cols, nRows);
 		final int sbRow = cols[0];
-		return new ColGroupEmpty(cols, nRows);
-		// final int apos = sb.pos(sbRow);
-		// final int alen = sb.size(sbRow) + apos;
-		// final AOffset offsets = OffsetFactory.create(sb.indexes(sbRow), nRows, apos, alen);
-		// final double[] vals = sb.values(sbRow);
-		// // count distinct items frequencies
-		// for(int j = apos; j < alen; j++)
-		// 	map.increment(vals[j]);
-		
-		// List<DCounts> entries = map.extractValues();
-		// Collections.sort(entries, Comparator.comparing(x -> -x.count));
-		// int[] counts = new int[entries.size() + 1];
-		// int sum = 0;
-		// double[] dict = new double[entries.size()];
-		// for(int i = 0; i < entries.size(); i++) {
-		// 	DCounts x = entries.get(i);
-		// 	counts[i] = x.count;
-		// 	sum += x.count;
-		// 	dict[i] = x.key;
-		// 	x.count = i;
-		// }
+		final int apos = sb.pos(sbRow);
+		final int alen = sb.size(sbRow) + apos;
+		final AOffset offsets = OffsetFactory.create(sb.indexes(sbRow), nRows, apos, alen);
+		final double[] vals = sb.values(sbRow);
+		// count distinct items frequencies
+		for(int j = apos; j < alen; j++)
+		map.increment(vals[j]);
 
-		// counts[entries.size()] = nRows - sum;
+		List<DCounts> entries = map.extractValues();
+		Collections.sort(entries, Comparator.comparing(x -> -x.count));
+		int[] counts = new int[entries.size() + 1];
+		int sum = 0;
+		double[] dict = new double[entries.size()];
+		for(int i = 0; i < entries.size(); i++) {
+		DCounts x = entries.get(i);
+		counts[i] = x.count;
+		sum += x.count;
+		dict[i] = x.key;
+		x.count = i;
+		}
 
-		// AMapToData mapToData = MapToFactory.create((alen - apos), entries.size());
-		// for(int j = apos; j < alen; j++)
-		// 	mapToData.set(j - apos, map.get(vals[j]));
+		counts[entries.size()] = nRows - sum;
 
-		// return new ColGroupSDCZeros(cols, nRows, new Dictionary(dict), offsets, mapToData, counts);
+		AMapToData mapToData = MapToFactory.create((alen - apos), entries.size());
+		for(int j = apos; j < alen; j++)
+		mapToData.set(j - apos, map.get(vals[j]));
+
+		return new ColGroupSDCZeros(cols, nRows, new Dictionary(dict), offsets, mapToData, counts);
 	}
 
 	protected static class Tmp {
@@ -506,29 +506,26 @@ public final class ColGroupFactory {
 		private DoubleCountHashMap dblCountMap;
 
 		protected Tmp() {
+			dblArrayMap = null;
+			dblCountMap = null;
 		}
 
 		protected DblArrayIntListHashMap getDblArrayMap(int size) {
-			if(dblArrayMap != null) {
+			if(dblArrayMap != null)
 				dblArrayMap.reset(size);
-				return dblArrayMap;
-			}
-			else {
+			else
 				dblArrayMap = new DblArrayIntListHashMap(size);
-				return dblArrayMap;
-			}
+
+			return dblArrayMap;
 
 		}
 
 		protected DoubleCountHashMap getDblCountMap(int size) {
-			if(dblCountMap != null) {
+			if(dblCountMap != null)
 				dblCountMap.reset(size);
-				return dblCountMap;
-			}
-			else {
+			else
 				dblCountMap = new DoubleCountHashMap(size);
-				return dblCountMap;
-			}
+			return dblCountMap;
 		}
 	}
 }
