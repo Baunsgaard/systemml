@@ -245,7 +245,7 @@ public class LibMatrixReorg {
 			int len = row ? in.rlen : in.clen;
 			int blklen = (int)(Math.ceil((double)len/k));
 			blklen += (!out.sparse && (blklen%8)!=0) ? 8-blklen%8 : 0;
-			blklen = (in.sparse) ? Math.max(blklen, 64): blklen;
+			blklen = (in.sparse) ? Math.max(blklen, 32): blklen;
 			for( int i=0; i<k & i*blklen<len; i++ )
 				tasks.add(new TransposeTask(in, out, row, i*blklen, Math.min((i+1)*blklen, len), cnt));
 			List<Future<Object>> taskret = pool.invokeAll(tasks);
