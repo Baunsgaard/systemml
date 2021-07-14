@@ -355,8 +355,6 @@ public class CompressedMatrixBlockFactory {
 
 		_stats.setColGroupsCounts(res.getColGroups());
 
-		if(res.getNumRows() >= 1000000)
-			System.gc(); // forced garbage collect.
 	
 		logPhase();
 
