@@ -35,8 +35,6 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.sysds.runtime.DMLRuntimeException;
 import org.apache.sysds.runtime.controlprogram.caching.MatrixObject.UpdateType;
 import org.apache.sysds.runtime.data.DenseBlock;
@@ -71,7 +69,7 @@ import org.apache.sysds.runtime.util.UtilFunctions;
  */
 public class LibMatrixReorg {
 
-	private static final Log LOG = LogFactory.getLog(LibMatrixReorg.class.getName());
+	// private static final Log LOG = LogFactory.getLog(LibMatrixReorg.class.getName());
 
 	//minimum number of elements for multi-threaded execution
 	public static long PAR_NUMCELL_THRESHOLD = 1024*1024; //1M
