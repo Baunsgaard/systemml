@@ -197,7 +197,7 @@ public class LibMatrixReorg {
 		{
 			return transpose(in, out);
 		}
-		
+		allowCSR = allowCSR && in.getNonZeros() < (long)Integer.MAX_VALUE;
 		// Timing time = new Timing(true);
 		
 		//set meta data and allocate output arrays (if required)
