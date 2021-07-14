@@ -640,7 +640,7 @@ public final class ColGroupFactory {
 		for(int j = apos; j < alen; j++)
 			mapToData.set(j - apos, map.get(vals[j]));
 
-		return new ColGroupSDCZeros(cols, nRows, new Dictionary(dict), offsets, mapToData, null);
+		return new ColGroupSDCZeros(cols, nRows, new Dictionary(dict), offsets, mapToData, counts);
 	}
 
 	protected static class Tmp {
