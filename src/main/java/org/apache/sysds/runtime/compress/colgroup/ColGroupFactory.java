@@ -102,7 +102,7 @@ public final class ColGroupFactory {
 			ExecutorService pool = CommonThreadPool.get(k);
 			List<CompressTask> tasks = new ArrayList<>();
 
-			List<List<CompressedSizeInfoColGroup>> threadGroups = makeGroups(csi.getInfo(), k);
+			List<List<CompressedSizeInfoColGroup>> threadGroups = makeGroups(csi.getInfo(), k /2);
 			for(List<CompressedSizeInfoColGroup> tg : threadGroups)
 				if(!tg.isEmpty())
 					tasks.add(new CompressTask(in, tg, compSettings));
