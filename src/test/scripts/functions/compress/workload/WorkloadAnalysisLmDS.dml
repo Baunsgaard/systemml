@@ -22,10 +22,20 @@
 X = read($1);
 y = read($2);
 
+# Limit to one classification
+y = y == min(y)
+
 print("")
-print("LM")
+print("LMDS")
 
 X = scale(X=X, scale=TRUE, center=TRUE);
-B = lm(X=X, y=y, verbose=TRUE);
+B = lmDS(X=X, y=y, verbose=TRUE);
+p = lmPredict(X=X, B=B, ytest=y, verbose=TRUE);
 
-print(sum(B))
+classifications = (p > 0.1)
+
+acc = sum(classifications == y)  / nrow(y)
+
+if(acc < 0.80)
+    print("ERROR: to low accuracy achieved")
+print(acc)

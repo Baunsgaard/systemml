@@ -41,6 +41,7 @@ import org.apache.sysds.runtime.compress.estim.CompressedSizeEstimator;
 import org.apache.sysds.runtime.compress.estim.CompressedSizeEstimatorFactory;
 import org.apache.sysds.runtime.compress.estim.CompressedSizeInfo;
 import org.apache.sysds.runtime.compress.utils.DblArrayIntListHashMap;
+import org.apache.sysds.runtime.compress.utils.DoubleCountHashMap;
 import org.apache.sysds.runtime.compress.workload.WTreeRoot;
 import org.apache.sysds.runtime.controlprogram.parfor.stat.Timing;
 import org.apache.sysds.runtime.matrix.data.LibMatrixReorg;
@@ -55,31 +56,29 @@ public class CompressedMatrixBlockFactory {
 	private static final Log LOG = LogFactory.getLog(CompressedMatrixBlockFactory.class.getName());
 
 	/** Timing object to measure the time of each phase in the compression */
-	private Timing time = new Timing(true);
+	private final Timing time = new Timing(true);
+	/** Compression statistics gathered throughout the compression */
+	private final CompressionStatistics _stats = new CompressionStatistics();
+	/** Parallelization degree */
+	private final int k;
+	/** Compression settings used for this compression */
+	private final CompressionSettings compSettings;
+	/** The main cost estimator used for the compression */
+	private final ICostEstimate costEstimator;
+
 	/** Time stamp of last phase */
 	private double lastPhase;
-	/** Compression statistics gathered throughout the compression */
-	private CompressionStatistics _stats = new CompressionStatistics();
 	/** Pointer to the original matrix Block that is about to be compressed. */
 	private MatrixBlock mb;
-	/** Parallelization degree */
-	private int k;
-	/** Compression settings used for this compression */
-	private CompressionSettings compSettings;
 	/** The resulting compressed matrix */
 	private CompressedMatrixBlock res;
 	/** The current Phase ID */
 	private int phase = 0;
 	/** Compression information gathered through the sampling, used for the actual compression decided */
 	private CompressedSizeInfo coCodeColGroups;
-	/** The main cost estimator used for the compression */
-	private ICostEstimate costEstimator;
 
 	private CompressedMatrixBlockFactory(MatrixBlock mb, int k, CompressionSettings compSettings, WTreeRoot root) {
-		this.mb = mb;
-		this.k = k;
-		this.compSettings = compSettings;
-		costEstimator = CostEstimatorFactory.create(compSettings, root, mb.getNumRows(), mb.getNumColumns());
+		this(mb, k, compSettings, CostEstimatorFactory.create(compSettings, root, mb.getNumRows(), mb.getNumColumns()));
 	}
 
 	private CompressedMatrixBlockFactory(MatrixBlock mb, int k, CompressionSettings compSettings,
@@ -187,7 +186,8 @@ public class CompressedMatrixBlockFactory {
 		_stats.denseSize = MatrixBlock.estimateSizeInMemory(mb.getNumRows(), mb.getNumColumns(), 1.0);
 		_stats.originalSize = mb.getInMemorySize();
 
-		res = new CompressedMatrixBlock(mb); // copy metadata.
+		res = new CompressedMatrixBlock(mb); // copy metadata and allocate soft reference
+
 		classifyPhase();
 		if(coCodeColGroups == null)
 			return abortCompression();
@@ -199,12 +199,11 @@ public class CompressedMatrixBlockFactory {
 		if(res == null)
 			return abortCompression();
 
-		res.recomputeNonZeros();
 		return new ImmutablePair<>(res, _stats);
 	}
 
 	private void classifyPhase() {
-		CompressedSizeEstimator sizeEstimator = CompressedSizeEstimatorFactory.getSizeEstimator(mb, compSettings);
+		CompressedSizeEstimator sizeEstimator = CompressedSizeEstimatorFactory.getSizeEstimator(mb, compSettings, k);
 		CompressedSizeInfo sizeInfos = sizeEstimator.computeCompressedSizeInfos(k);
 		_stats.estimatedSizeCols = sizeInfos.memoryEstimate();
 		logPhase();
@@ -229,9 +228,9 @@ public class CompressedMatrixBlockFactory {
 	private void transposePhase() {
 		boolean sparse = mb.isInSparseFormat();
 		transposeHeuristics();
-		mb = compSettings.transposed ? LibMatrixReorg.transpose(mb,
-			new MatrixBlock(mb.getNumColumns(), mb.getNumRows(), sparse),
-			k) : new MatrixBlock(mb.getNumRows(), mb.getNumColumns(), sparse).copyShallow(mb);
+		if(compSettings.transposed)
+			mb = LibMatrixReorg.transpose(mb, new MatrixBlock(mb.getNumColumns(), mb.getNumRows(), sparse), k, true);
+
 		logPhase();
 	}
 
@@ -245,9 +244,11 @@ public class CompressedMatrixBlockFactory {
 				break;
 			default:
 				if(mb.isInSparseFormat()) {
+					// compSettings.transposed = true;
+					// compSettings.transposed = false;
 					boolean isAboveRowNumbers = mb.getNumRows() > 500000;
-					boolean isAboveThreadToColumnRatio = coCodeColGroups.getNumberColGroups() > mb.getNumColumns() / 2;
-					compSettings.transposed = isAboveRowNumbers || isAboveThreadToColumnRatio;
+					boolean isAboveThreadToColumnRatio = coCodeColGroups.getNumberColGroups() > mb.getNumColumns() / 4;
+					compSettings.transposed = isAboveRowNumbers && isAboveThreadToColumnRatio;
 				}
 				else
 					compSettings.transposed = false;
@@ -345,9 +346,13 @@ public class CompressedMatrixBlockFactory {
 			return;
 		}
 
-		mb.cleanupBlock(true, true);
-
 		_stats.setColGroupsCounts(res.getColGroups());
+
+		final long oldNNZ = mb.getNonZeros();
+		if(oldNNZ <= 0)
+			res.setNonZeros(oldNNZ);
+		else
+			res.recomputeNonZeros();
 
 		logPhase();
 
@@ -382,8 +387,10 @@ public class CompressedMatrixBlockFactory {
 					break;
 				case 3:
 					LOG.debug("--compression phase " + phase + " Compress  : " + getLastTimePhase());
-					LOG.debug("--compression Hash collisions:" + DblArrayIntListHashMap.hashMissCount);
+					LOG.debug("--compression Hash collisions:" + "(" + DblArrayIntListHashMap.hashMissCount + ","
+						+ DoubleCountHashMap.hashMissCount + ")");
 					DblArrayIntListHashMap.hashMissCount = 0;
+					DoubleCountHashMap.hashMissCount = 0;
 					LOG.debug("--compressed initial actual size:" + _stats.compressedInitialSize);
 					break;
 				case 4:
@@ -419,11 +426,11 @@ public class CompressedMatrixBlockFactory {
 		phase++;
 	}
 
-	public void setNextTimePhase(double time) {
+	private void setNextTimePhase(double time) {
 		lastPhase = time;
 	}
 
-	public double getLastTimePhase() {
+	private double getLastTimePhase() {
 		return lastPhase;
 	}
 

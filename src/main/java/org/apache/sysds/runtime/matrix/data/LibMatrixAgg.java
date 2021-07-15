@@ -1639,6 +1639,10 @@ public class LibMatrixAgg
 						out.quickSetValue(2, j, in.rlen); //count
 				break;
 			}
+			
+			case CUM_SUM_PROD:{
+				break;
+			}
 
 			default:
 				throw new DMLRuntimeException("Unsupported aggregation type: "+optype);
